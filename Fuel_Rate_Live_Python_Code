@@ -1,0 +1,55 @@
+import requests
+from bs4 import BeautifulSoup
+import pandas as pd
+
+# URL of the initial page
+initial_url = "https://www.petroldieselprice.com/diesel-price-today"
+
+# Fetch the content of the initial page
+initial_response = requests.get(initial_url)
+initial_soup = BeautifulSoup(initial_response.content, "html.parser")
+
+# Extract links and page names from the initial page
+links_and_names = []
+table = initial_soup.find("tfoot")
+for row in table.find_all("tr"):
+    cells = row.find_all("td")
+    if len(cells) == 2:
+        link1 = cells[0].find("a")
+        link2 = cells[1].find("a")
+        if link1 and link2:
+            links_and_names.append((link1.text.strip(), link1["href"]))
+            links_and_names.append((link2.text.strip(), link2["href"]))
+
+# List to store final data
+final_data = []
+
+# Loop through links, fetch all table data, and extract information
+for name, link in links_and_names:
+    full_url = f"https://www.petroldieselprice.com{link}"
+    link_response = requests.get(full_url)
+    link_soup = BeautifulSoup(link_response.content, "html.parser")
+    
+    div_contents = link_soup.find_all("div", id="order_review")
+    
+    for table_num, div_content in enumerate(div_contents, start=1):
+        table = div_content.find("table", class_="shop_table")
+        rows = table.find_all("tr")
+        for row in rows[1:]:
+            cells = row.find_all("td")
+            if len(cells) >= 3:  # Make sure there are at least 3 cells in the row
+                date = cells[0].get_text(strip=True)
+                diesel_price = cells[1].get_text(strip=True)
+                change = cells[2].get_text(strip=True)
+                if "Price" not in change:  # Exclude rows with "Price" in the "Change" column
+                    final_data.append((name, date, diesel_price, change, str(table_num)))
+
+# Create a DataFrame
+df = pd.DataFrame(final_data, columns=["Location", "Date", "Diesel Price / Litre", "Change", "Table Number"])
+columns_to_replace = ["Diesel Price / Litre", "Change"]
+df[columns_to_replace] = df[columns_to_replace].replace("₹ ", "", regex=True)
+
+# Save DataFrame to a single CSV file
+df.to_csv("consolidated_data_Sachin_9034283082.csv", index=False, encoding="utf-8")
+
+print("Data saved to consolidated_data_Sachin_9034283082.csv")
