@@ -3,3 +3,7 @@ FuelRateLiveUpdate: Tool to access Indian fuel rates categorized by city and sta
 
 
 Webiste used for WebScaping - https://www.petroldieselprice.com/
+
+
+![image](https://github.com/SachinSharma48/FuelRateFetcher/assets/140776112/462c5b59-3a73-43d0-ac3e-abaa7be3deb6)
+
